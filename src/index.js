@@ -14,7 +14,7 @@ import lasers from "./assets/laser-bolts.png";
 
 // game settings
 const gameSettings = {
-  playerSpeed: 180
+  playerSpeed: 100
 };
 
 // config
@@ -166,6 +166,10 @@ function create() {
   this.enemy1 = this.add.sprite(config.width/2 - 50, config.height / 2, "enemy1");
   this.enemy2 = this.add.sprite(config.width/2 - 100, config.height / 2, "enemy2");
   this.enemy3 = this.add.sprite(config.width/2 + 50, config.height / 2, "enemy3");
+  this.enemies = this.physics.add.group();
+  this.enemies.add(this.enemy1);
+  this.enemies.add(this.enemy2);
+  this.enemies.add(this.enemy3);
   // add enemy animations
   this.enemy1.play("enemy1_anim");
   this.enemy2.play("enemy2_anim");
@@ -201,6 +205,20 @@ function create() {
 
   // add input event for explosions
   this.input.on('gameobjectdown', explode, this);
+
+  // bounce powerups and destroy laser when a powerup is shot
+  this.physics.add.collider(this.projectiles, this.powerups, function(projectile, powerup) {
+    projectile.destroy();
+  });
+
+  // pickup powerups on contact with ship
+  this.physics.add.overlap(this.ship, this.powerups, pickupPowerup, null, this);
+
+  // deal damage and destroy enemies on contact
+  this.physics.add.overlap(this.ship, this.enemies, damageShip, null, this);
+
+  // kill enemy when shot
+  this.physics.add.overlap(this.projectiles, this.enemies, hitEnemy, null, this);
 }
 
 function update() {
@@ -253,6 +271,24 @@ function resetPos(object) {
 function explode(pointer, object) {
   object.setTexture("explosion");
   object.play("explode)");
+}
+
+// pickup powerups
+function pickupPowerup(ship, powerup) {
+  powerup.disableBody(true, true);
+}
+
+// deal damage
+function damageShip(ship, enemy) {
+  resetPos(enemy);
+  ship.x = config.width/2 - 8;
+  ship.y = config.height - 100;
+}
+
+// hit enemy
+function hitEnemy(projectile, enemy) {
+  projectile.destroy();
+  resetPos(enemy);
 }
 
 
