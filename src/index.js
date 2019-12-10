@@ -140,7 +140,7 @@ function create() {
   this.anims.create({
     key: "explode",
     frames: this.anims.generateFrameNumbers("explosion"),
-    frameRate: 1,
+    frameRate: 20,
     repeat: 0,
     hideOnComplete: true
   });
@@ -187,9 +187,9 @@ function create() {
 
   // add powerups
   this.powerups = this.physics.add.group();
-  var maxPowerups = 4;
-  for (var i = 0; i <= maxPowerups; i++) {
-    var powerup = this.physics.add.sprite(16,16, "powerup");
+  let maxPowerups = 4;
+  for (let i = 0; i <= maxPowerups; i++) {
+    let powerup = this.physics.add.sprite(16,16, "powerup");
     this.powerups.add(powerup);
     powerup.setRandomPosition(0, 0, game.config.width, game.config.height);
     // add powerup animations
@@ -205,6 +205,16 @@ function create() {
   }
 
   // add score label
+  const graphics = this.add.graphics();
+  graphics.fillStyle(0x000000, 1);
+  graphics.beginPath();
+  graphics.moveTo(0,0);
+  graphics.lineTo(config.width, 0);
+  graphics.lineTo(config.width, 20);
+  graphics.lineTo(0,20);
+  graphics.lineTo(0,0);
+  graphics.closePath();
+  graphics.fillPath();
   this.score = 0;
   this.scoreLabel = this.add.bitmapText(10,5,"pixelFont", "SCORE ", 16);
 
@@ -253,7 +263,7 @@ function update() {
   if (Phaser.Input.Keyboard.JustDown(this.spacebar)) {
     let laser = new Laser(this, this.ship.x, this.ship.y);
   }
-  for(var i = 0; i < this.projectiles.getChildren().length; i++) {
+  for(let i = 0; i < this.projectiles.getChildren().length; i++) {
     let laser = this.projectiles.getChildren()[i];
     laser.update();
   }
@@ -270,14 +280,14 @@ function move(object, speed) {
 // reset object position to
 function resetPos(object) {
   object.y = 0;
-  var randomX = Phaser.Math.Between(0, config.width);
+  let randomX = Phaser.Math.Between(0, config.width);
   object.x = randomX;
 }
 
 // add explosion sprite
 function explode(enemy) {
   enemy.setTexture("explosion");
-  enemy.play("explode)");
+  enemy.play("explode");
 }
 
 // pickup powerups
@@ -285,20 +295,43 @@ function pickupPowerup(ship, powerup) {
   powerup.disableBody(true, true);
 }
 
+function updateScore() {
+  let scoreFormatted = this.zero(this.score, 6);
+  this.scoreLabel.text = "SCORE " + scoreFormatted;
+}
+
 // deal damage
 function damageShip(ship, enemy) {
+  explode(ship);
   resetPos(enemy);
-  ship.x = config.width/2 - 8;
-  ship.y = config.height - 100;
+  setTimeout(function() {
+    ship.x = config.width/2 - 8;
+    ship.y = config.height - 100;
+    ship.play("thrust");
+  }, 200);
+  this.score = 0;
+  let scoreFormatted = zero(this.score, 6);
+  this.scoreLabel.text = "SCORE " + this.score;
 }
 
 // hit enemy
 function hitEnemy(projectile, enemy) {
-  projectile.destroy();
-  explode(enemy);
+  projectile.body.velocity.y = 0;
+  explode(projectile);
+  setTimeout(function() { projectile.destroy() }, 500);
   resetPos(enemy);
   this.score += 15;
-  this.scoreLabel.text = "SCORE " + this.score;
+  let scoreFormatted = zero(this.score, 6);
+  this.scoreLabel.text = "SCORE " + scoreFormatted;
+}
+
+// add zeroes to score label
+function zero(number, size) {
+  let stringNumber = String(number);
+  while (stringNumber.length < (size || 2)) {
+    stringNumber = "0" + stringNumber;
+  }
+  return stringNumber;
 }
 
 
