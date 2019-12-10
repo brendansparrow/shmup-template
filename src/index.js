@@ -12,6 +12,9 @@ import explosion from "./assets/explosion.png";
 import powerup from "./assets/power-up.png";
 import lasers from "./assets/laser-bolts.png";
 
+import fontImage from "./assets/font/font.png";
+import fontXML from "./assets/font/font.xml";
+
 // game settings
 const gameSettings = {
   playerSpeed: 100
@@ -88,6 +91,8 @@ function preload() {
     frameWidth: 16,
     frameHeight: 16
   });
+
+  this.load.bitmapFont("pixelFont",fontImage,fontXML);
 }
 
 function create() {
@@ -199,12 +204,14 @@ function create() {
     powerup.setBounce(1);
   }
 
+  // add score label
+  this.score = 0;
+  this.scoreLabel = this.add.bitmapText(10,5,"pixelFont", "SCORE ", 16);
+
+
   // shoot
   this.spacebar = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
   this.projectiles = this.add.group();
-
-  // add input event for explosions
-  this.input.on('gameobjectdown', explode, this);
 
   // bounce powerups and destroy laser when a powerup is shot
   this.physics.add.collider(this.projectiles, this.powerups, function(projectile, powerup) {
@@ -268,9 +275,9 @@ function resetPos(object) {
 }
 
 // add explosion sprite
-function explode(pointer, object) {
-  object.setTexture("explosion");
-  object.play("explode)");
+function explode(enemy) {
+  enemy.setTexture("explosion");
+  enemy.play("explode)");
 }
 
 // pickup powerups
@@ -288,7 +295,10 @@ function damageShip(ship, enemy) {
 // hit enemy
 function hitEnemy(projectile, enemy) {
   projectile.destroy();
+  explode(enemy);
   resetPos(enemy);
+  this.score += 15;
+  this.scoreLabel.text = "SCORE " + this.score;
 }
 
 
