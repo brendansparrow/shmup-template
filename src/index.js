@@ -12,6 +12,11 @@ import explosion from "./assets/explosion.png";
 import powerup from "./assets/power-up.png";
 import lasers from "./assets/laser-bolts.png";
 
+// game settings
+const gameSettings = {
+  playerSpeed: 180
+};
+
 // config
 const config = {
   type: Phaser.AUTO,
@@ -31,6 +36,24 @@ const config = {
     }
   }
 };
+
+// Laser class
+class Laser extends Phaser.GameObjects.Sprite {
+    constructor(scene, x, y) {
+        super( scene, x, y, "laser");
+        scene.add.existing(this);
+        scene.projectiles.add(this);
+
+        this.play("laser_anim");
+        scene.physics.world.enableBody(this);
+        this.body.velocity.y = -250;
+    }
+    update() {
+      if (this.y < 0) {
+        this.destroy();
+      }
+    }
+}
 
 const game = new Phaser.Game(config);
 
@@ -57,7 +80,7 @@ function preload() {
     frameWidth: 16,
     frameHeight: 16
   });
-  this.load.spritesheet("lasers", lasers, {
+  this.load.spritesheet("laser", lasers, {
     frameWidth: 16,
     frameHeight: 16
   });
@@ -116,9 +139,28 @@ function create() {
     repeat: 0,
     hideOnComplete: true
   });
+  this.anims.create({
+    key: "thrust",
+    frames: this.anims.generateFrameNumbers("ship"),
+    framerate: 1,
+    repeat: -1
+  });
+  this.anims.create({
+    key: "laser_anim",
+    frames: this.anims.generateFrameNumbers("laser", {
+      start: 2,
+      end: 3
+    }),
+    framerate: 4,
+    repeat: -1
+  });
 
   // add player
-  this.ship = this.add.sprite(config.width / 2, config.height - 100, "ship");
+  this.ship = this.physics.add.sprite(config.width / 2, config.height - 100, "ship");
+  this.ship.setCollideWorldBounds(true);
+  this.ship.play("thrust");
+  // add player input
+  this.cursorKeys = this.input.keyboard.createCursorKeys();
 
   // add enemies
   this.enemy1 = this.add.sprite(config.width/2 - 50, config.height / 2, "enemy1");
@@ -153,18 +195,43 @@ function create() {
     powerup.setBounce(1);
   }
 
+  // shoot
+  this.spacebar = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+  this.projectiles = this.add.group();
+
   // add input event for explosions
   this.input.on('gameobjectdown', explode, this);
 }
 
 function update() {
+  // move background
+  this.background.tilePositionY -= 0.5;
+
   // move enemeies
   move(this.enemy1, 1.75);
   move(this.enemy2, 1.5);
   move(this.enemy3, 1);
 
-  // move background
-  this.background.tilePositionY -= 0.5;
+  // move player
+  if(this.cursorKeys.left.isDown) {
+    this.ship.setVelocityX(-gameSettings.playerSpeed);
+  } else if (this.cursorKeys.right.isDown) {
+    this.ship.setVelocityX(gameSettings.playerSpeed);
+  }
+  if(this.cursorKeys.up.isDown) {
+    this.ship.setVelocityY(-gameSettings.playerSpeed);
+  } else if (this.cursorKeys.down.isDown) {
+    this.ship.setVelocityY(gameSettings.playerSpeed);
+  }
+
+  // shoot
+  if (Phaser.Input.Keyboard.JustDown(this.spacebar)) {
+    let laser = new Laser(this, this.ship.x, this.ship.y);
+  }
+  for(var i = 0; i < this.projectiles.getChildren().length; i++) {
+    let laser = this.projectiles.getChildren()[i];
+    laser.update();
+  }
 }
 
 // move object by updating Y velocity
