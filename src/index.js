@@ -43,7 +43,7 @@ const config = {
 // Laser class
 class Laser extends Phaser.GameObjects.Sprite {
     constructor(scene, x, y) {
-        super( scene, x, y, "laser");
+        super(scene, x, y, "laser");
         scene.add.existing(this);
         scene.projectiles.add(this);
 
@@ -52,7 +52,7 @@ class Laser extends Phaser.GameObjects.Sprite {
         this.body.velocity.y = -250;
     }
     update() {
-      if (this.y < 0) {
+      if (this.y < 32) {
         this.destroy();
       }
     }
@@ -161,7 +161,7 @@ function create() {
   });
 
   // add player
-  this.ship = this.physics.add.sprite(config.width / 2, config.height - 100, "ship");
+  this.ship = this.physics.add.sprite(config.width / 2, config.height - 32, "ship");
   this.ship.setCollideWorldBounds(true);
   this.ship.play("thrust");
   // add player input
@@ -216,7 +216,7 @@ function create() {
   graphics.closePath();
   graphics.fillPath();
   this.score = 0;
-  this.scoreLabel = this.add.bitmapText(10,5,"pixelFont", "SCORE ", 16);
+  this.scoreLabel = this.add.bitmapText(10,5,"pixelFont", "SCORE 000000", 16);
 
 
   // shoot
@@ -261,7 +261,9 @@ function update() {
 
   // shoot
   if (Phaser.Input.Keyboard.JustDown(this.spacebar)) {
-    let laser = new Laser(this, this.ship.x, this.ship.y);
+    if (this.ship.active) {
+      let laser = new Laser(this, this.ship.x, this.ship.y - 8);
+    }
   }
   for(let i = 0; i < this.projectiles.getChildren().length; i++) {
     let laser = this.projectiles.getChildren()[i];
@@ -302,16 +304,25 @@ function updateScore() {
 
 // deal damage
 function damageShip(ship, enemy) {
-  explode(ship);
+  if (ship.alpha == 1) {
+    explode(ship);
+    ship.x = config.width/2 - 8;
+    ship.y = config.height - 32;
+    ship.disableBody(true, true);
+    this.score = 0;
+    this.scoreLabel.text = "SCORE 000000";
+  }
   resetPos(enemy);
   setTimeout(function() {
-    ship.x = config.width/2 - 8;
-    ship.y = config.height - 100;
+    ship.enableBody(true, ship.x, ship.y, true, true);
     ship.play("thrust");
+    ship.alpha = 0.5;
+    setTimeout(function() {
+      ship.alpha = 1;
+    }, 1000);
   }, 200);
-  this.score = 0;
   let scoreFormatted = zero(this.score, 6);
-  this.scoreLabel.text = "SCORE " + this.score;
+  
 }
 
 // hit enemy
