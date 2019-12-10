@@ -10,9 +10,6 @@ import explosion from "./assets/explosion.png";
 import powerup from "./assets/power-up.png";
 import lasers from "./assets/laser-bolts.png";
 
-// import Boot from "./scenes/Boot.js";
-// import Play from "./scenes/Play.js";
-
 const config = {
   type: Phaser.AUTO,
   parent: "phaser-example",
@@ -21,6 +18,7 @@ const config = {
   scene: {
     preload: preload,
     create: create,
+    update: update
   }
 };
 
@@ -28,33 +26,87 @@ const game = new Phaser.Game(config);
 
 function preload() {
   this.load.image("background", background);
-  this.load.image("ship", ship);
-  this.load.image("enemy1", enemy1);
-  this.load.image("enemy2", enemy2);
-  this.load.image("enemy3", enemy3);
+
+  this.load.spritesheet("ship", ship, {
+    frameWidth: 16,
+    frameHeight: 24
+  });
+
+  this.load.spritesheet("enemy1", enemy1, {
+    frameWidth: 16,
+    frameHeight: 16
+  });
+  this.load.spritesheet("enemy2", enemy2, {
+    frameWidth: 32,
+    frameHeight: 16
+  });
+  this.load.spritesheet("enemy3", enemy3, {
+    frameWidth: 32,
+    frameHeight: 32
+  });
+
+  this.load.spritesheet("explosion", explosion, {
+    frameWidth: 16,
+    frameHeight: 16
+  });
 }
 
 function create() {
-  this.background = this.add.image(0,0,"background");
+  this.background = this.add.tileSprite(0, 0, config.width, config.height, "background");
   this.background.setOrigin(0,0);
 
-  this.ship = this.add.image(config.width / 2, config.height - 100, "ship");
+  this.ship = this.add.sprite(config.width / 2, config.height - 100, "ship");
 
-  this.enemy1 = this.add.image(config.width/2 - 50, config.height / 2, "enemy1");
-  this.enemy2 = this.add.image(config.width/2 - 100, config.height / 2, "enemy2");
-  this.enemy3 = this.add.image(config.width/2 + 50, config.height / 2, "enemy3");
+  this.enemy1 = this.add.sprite(config.width/2 - 50, config.height / 2, "enemy1");
+  this.enemy2 = this.add.sprite(config.width/2 - 100, config.height / 2, "enemy2");
+  this.enemy3 = this.add.sprite(config.width/2 + 50, config.height / 2, "enemy3");
+
+  this.anims.create({
+    key: "enemy1_anim",
+    frames: this.anims.generateFrameNumbers("enemy1"),
+    frameRate: 20,
+    repeat: -1
+  });
+
+  this.anims.create({
+    key: "enemy2_anim",
+    frames: this.anims.generateFrameNumbers("enemy2"),
+    frameRate: 20,
+    repeat: -1
+  });
+
+  this.anims.create({
+    key: "enemy3_anim",
+    frames: this.anims.generateFrameNumbers("enemy3"),
+    frameRate: 20,
+    repeat: -1
+  });
+
+  this.anims.create({
+    key: "explode",
+    frames: this.anims.generateFrameNumbers("explosion"),
+    frameRate: 20,
+    repeat: 0,
+    hideOnComplete: true
+  });
+
+  this.enemy1.play("enemy1_anim");
+  this.enemy2.play("enemy2_anim");
+  this.enemy3.play("enemy3_anim");
 }
 
 function update() {
-  this.move(enemy1, 1);
-  this.move(enemy2, 2);
-  this.move(enemy3, 3);
+  move(this.enemy1, 1.75);
+  move(this.enemy2, 1.5);
+  move(this.enemy3, 1);
+
+  this.background.tilePositionY -= 0.5;
 }
 
 function move(object, speed) {
   object.y += speed;
   if (object.y > config.height) {
-    this.resetPos(object);
+    resetPos(object);
   }
 }
 
