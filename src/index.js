@@ -15,6 +15,10 @@ import lasers from "./assets/laser-bolts.png";
 import fontImage from "./assets/font/font.png";
 import fontXML from "./assets/font/font.xml";
 
+import audioLaser from "./assets/sounds/beam.mp3";
+import audioExplosion from "./assets/sounds/explosion.mp3";
+import audioPickup from "./assets/sounds/pickup.mp3";
+
 // game settings
 const gameSettings = {
   playerSpeed: 100
@@ -58,10 +62,12 @@ class Laser extends Phaser.GameObjects.Sprite {
     }
 }
 
+// pass config into new Phaser instance
 const game = new Phaser.Game(config);
 
 // preload assets
 function preload() {
+  // load images and sprites
   this.load.image("background", background);
   this.load.spritesheet("ship", ship, {
     frameWidth: 16,
@@ -92,7 +98,13 @@ function preload() {
     frameHeight: 16
   });
 
+  // load font
   this.load.bitmapFont("pixelFont",fontImage,fontXML);
+
+  // load sounds
+  this.load.audio('laserSound', audioLaser);
+  this.load.audio('explosionSound', audioExplosion);
+  this.load.audio('pickupSound', audioPickup);
 }
 
 function create() {
@@ -218,6 +230,11 @@ function create() {
   this.score = 0;
   this.scoreLabel = this.add.bitmapText(10,5,"pixelFont", "SCORE 000000", 16);
 
+  // add sound
+  this.laserSound = this.sound.add('laserSound');
+  this.explosionSound = this.sound.add('explosionSound');
+  this.pickupSound = this.sound.add('pickupSound');
+
 
   // shoot
   this.spacebar = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
@@ -263,6 +280,7 @@ function update() {
   if (Phaser.Input.Keyboard.JustDown(this.spacebar)) {
     if (this.ship.active) {
       let laser = new Laser(this, this.ship.x, this.ship.y - 8);
+      this.laserSound.play();
     }
   }
   for(let i = 0; i < this.projectiles.getChildren().length; i++) {
@@ -294,6 +312,7 @@ function explode(enemy) {
 
 // pickup powerups
 function pickupPowerup(ship, powerup) {
+  this.pickupSound.play();
   powerup.disableBody(true, true);
 }
 
@@ -306,6 +325,7 @@ function updateScore() {
 function damageShip(ship, enemy) {
   if (ship.alpha == 1) {
     explode(ship);
+    this.explosionSound.play();
     ship.x = config.width/2 - 8;
     ship.y = config.height - 32;
     ship.disableBody(true, true);
@@ -330,6 +350,7 @@ function hitEnemy(projectile, enemy) {
   projectile.body.velocity.y = 0;
   explode(projectile);
   setTimeout(function() { projectile.destroy() }, 500);
+  this.explosionSound.play();
   resetPos(enemy);
   this.score += 15;
   let scoreFormatted = zero(this.score, 6);
